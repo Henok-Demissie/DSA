@@ -1,11 +1,11 @@
 class Solution:
     def numTrees(self, n: int) -> int:
-        def dfs(low, high, memo: dict):
-            if low > high:
-                return 1
-            if (low, high) not in memo:
-                memo[(low, high)] = 0
-                for i in range(low, high+1):
-                    memo[(low, high)] += dfs(low, i-1, memo) * dfs(i+1, high, memo)
-            return memo[(low, high)]
-        return dfs(1, n, {})
+        uniq_tree = [1] * (n + 1)
+        
+        for nodes in range(2, n + 1):
+            total = 0
+            for root in range(1, nodes + 1):
+                total += uniq_tree[root - 1] * uniq_tree[nodes - root]
+            uniq_tree[nodes] = total
+        
+        return uniq_tree[n]
