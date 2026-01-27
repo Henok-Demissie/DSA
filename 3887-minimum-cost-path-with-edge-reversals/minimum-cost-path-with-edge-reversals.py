@@ -1,59 +1,42 @@
 import heapq
 
-# constants equivalent to C++
-N = 50000
-USHRT_MAX = (1 << 16) - 1
+USHRT_MASK = (1 << 16) - 1
 UINT_MAX = (1 << 32) - 1
-
-# adjacency list: each entry stores packed (weight, vertex)
-adj = [[] for _ in range(N)]
-dist = [UINT_MAX] * N
 
 
 class Solution:
-    @staticmethod
-    def pack(w: int, v: int) -> int:
-        # pack into uint64: high 48 bits = w, low 16 bits = v
-        return (w << 16) | v
+    def minCost(self, n, edges):
+        adj = [[] for _ in range(n)]
+        dist = [UINT_MAX] * n
 
-    @staticmethod
-    def build_adj(n: int, edges):
-        for i in range(n):
-            adj[i].clear()
-
+        # build adjacency
         for u, v, w in edges:
-            adj[u].append(Solution.pack(w, v))       # normal edge
-            adj[v].append(Solution.pack(2 * w, u))   # reversed edge
+            adj[u].append((w << 16) | v)
+            adj[v].append(((w << 1) << 16) | u)
 
-    @staticmethod
-    def minCost(n: int, edges) -> int:
-        Solution.build_adj(n, edges)
+        hq = []
+        dist0 = dist
+        dist0[0] = 0
+        heappush = heapq.heappush
+        heappop = heapq.heappop
 
-        # initialize distances
-        for i in range(n):
-            dist[i] = UINT_MAX
+        heappush(hq, 0)  # pack(0, 0)
 
-        pq = []
-        dist[0] = 0
-        heapq.heappush(pq, Solution.pack(0, 0))
-
-        while pq:
-            data = heapq.heappop(pq)
+        while hq:
+            data = heappop(hq)
             d = data >> 16
-            u = data & USHRT_MAX
+            u = data & USHRT_MASK
 
-            if d > dist[u]:
+            if d != dist0[u]:
                 continue
             if u == n - 1:
                 return d
 
             for wv in adj[u]:
-                w = wv >> 16
-                v = wv & USHRT_MAX
-                d2 = d + w
-
-                if d2 < dist[v]:
-                    dist[v] = d2
-                    heapq.heappush(pq, Solution.pack(d2, v))
+                nd = d + (wv >> 16)
+                v = wv & USHRT_MASK
+                if nd < dist0[v]:
+                    dist0[v] = nd
+                    heappush(hq, (nd << 16) | v)
 
         return -1
